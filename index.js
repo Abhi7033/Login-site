@@ -32,6 +32,10 @@ function logger( req, res, next){
     
 }
 
+app.get("/", function(req,res){
+    res.sendFile(__dirname + "/public/index.html")
+})
+
 app.post("/signup", logger, function(req, res){
     //input validation using zod -> later
     const username = req.body.username;
