@@ -24,7 +24,15 @@ const users =  [];
 //     return token;
 // }
 
-app.post("/signup", function(req, res){
+//middleware (logger)
+
+function logger( req, res, next){
+    console.log(req.method + "request came");
+    next();
+    
+}
+
+app.post("/signup", logger, function(req, res){
     //input validation using zod -> later
     const username = req.body.username;
     const password = req.body.password;
@@ -42,7 +50,7 @@ app.post("/signup", function(req, res){
 
 })
 
-app.post("/signin", function(req, res){
+app.post("/signin", logger, function(req, res){
     const username = req.body.username;
     const password = req.body.password;
 
@@ -74,13 +82,23 @@ app.post("/signin", function(req, res){
 
 })
 
-app.get("/me", function(req, res){
-    const token = req.header.token; //jwt
-    const decodedInfo = jwt.verify(token , JWT_SECRET); // we will get the decoded username here {username : abc} 
-    const username = decodedInfo.username;
+function auth(req, res, next){
+    const token =  req.header.token;
+    const decodedInfo = jwt.verify(token, JWT_SECRET);
+    if(decodedInfo.username){
+        req.username = decodedInfo.username;
+        next()
+    }else{
+        res.json({
+            message: "you are not logged in"
+        })
+    }
+}
 
+app.get("/me", logger, auth, function(req, res){
+   
     const foundUser = users.find(function(u){
-        if(u.username == username){
+        if(u.username == req.username){
             return true;
         }else{
             return false;
@@ -98,6 +116,11 @@ app.get("/me", function(req, res){
         })
     }
 })
+
+//if we have to authenticate the user in multiple apis then we have to write logic for auth again and again so we should make a middleware
+//to use it in multiple apis 
+// {const token = req.header.token;
+//   const decodedInfo = jwt.verify(token , JWT_SECRET);}
 
 app.listen(3000);
 
